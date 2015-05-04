@@ -1,0 +1,13 @@
+{
+    "name": "crazedsanity/siteconfig",
+    "description": "XML/INI-based site configuration for PHP.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dan Falconer",
+            "email": "github@crazedsanity.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
