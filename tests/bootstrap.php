@@ -3,11 +3,11 @@
 
 require_once(__DIR__ .'/../SiteConfig.class.php');
 $dir = __DIR__ .'/../..';
-if(file_exists(__DIR__ .'/../vendor/core/FileSystem.class.php')) {
-	$dir = __DIR__ .'/../vendor';
+if(file_exists(__DIR__ .'/../vendor/crazedsanity/core/FileSystem.class.php')) {
+	$dir = __DIR__ .'/../vendor/crazedsanity';
 }
-elseif(file_exists(__DIR__ .'/../../vendor/core/FileSystem.class.php')) {
-	$dir = __DIR__ .'/../../vendor';
+elseif(file_exists(__DIR__ .'/../../vendor/crazedsanity/core/FileSystem.class.php')) {
+	$dir = __DIR__ .'/../../vendor/crazedsanity';
 }
 require_once($dir .'/core/base.abstract.php');
 require_once($dir .'/core/Version.class.php');
