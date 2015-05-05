@@ -1,14 +1,15 @@
 <?php
 
-require_once(__DIR__ .'/../SiteConfig.class.php');
 
-if(file_exists(__DIR__ .'/../../core/FileSystem.class.php')) {
-echo "Found it!\n";
-	require_once(__DIR__ .'/../../core/base.abstract.php');
-	require_once(__DIR__ .'/../../core/Version.class.php');
-	require_once(__DIR__ .'/../../core/ToolBox.class.php');
-	require_once(__DIR__ .'/../../core/FileSystem.class.php');
+require_once(__DIR__ .'/../SiteConfig.class.php');
+$dir = __DIR__ .'/../..';
+if(file_exists(__DIR__ .'/../vendor/core/FileSystem.class.php')) {
+	$dir = __DIR__ .'/../vendor';
 }
-else {
-	echo "could not find Filesystem....\n";
+elseif(file_exists(__DIR__ .'/../../vendor/core/FileSystem.class.php')) {
+	$dir = __DIR__ .'/../../vendor';
 }
+require_once($dir .'/core/base.abstract.php');
+require_once($dir .'/core/Version.class.php');
+require_once($dir .'/core/ToolBox.class.php');
+require_once($dir .'/core/FileSystem.class.php');
