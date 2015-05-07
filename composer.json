@@ -10,6 +10,6 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "crazedsanity/core": "dev-master"
+        "crazedsanity/core": "~0.1"
     }
 }
