@@ -11,16 +11,12 @@
  */
 
 use crazedsanity\ToolBox;
-use crazedsanity\Version;
-use crazedsanity\FileSystem;
 
 class SiteConfig  {
 	
 	private $configDirname;
 	private $configFile;
-	private $activeSection;
 	private $fullConfig=array();
-	private $configSections=array();
 	private $isInitialized=false;
 	
 	//-------------------------------------------------------------------------
@@ -28,13 +24,11 @@ class SiteConfig  {
 	 * Constructor.
 	 * 
 	 * @param $configFileLocation	(str) URI for config file.
-	 * @param $section				(str,optional) set active section (default=MAIN)
-	 * @param $setVarPrefix			(str,optional) prefix to add to all global & constant names.
 	 * 
 	 * @return NULL					(PASS) object successfully created
 	 * @return exception			(FAIL) failed to create object (see exception message)
 	 */
-	public function __construct($configFileLocation, $section=null) {
+	public function __construct($configFileLocation) {
 		if(strlen($configFileLocation) && file_exists($configFileLocation)) {
 			
 			$this->configDirname = dirname($configFileLocation);
@@ -44,42 +38,8 @@ class SiteConfig  {
 			throw new exception(__METHOD__ .": invalid configuration file (". $configFileLocation .")");
 		}
 		
-		$ini = parse_ini_file($configFileLocation, true);
-//		ToolBox::debug_print($ini,1);
-//		exit;
-		
 		$this->parse_config();
-		if(strlen($section)) {
-			$this->set_active_section($section);
-			$this->config = $this->get_section($section);
-		}
 	}//end __construct()
-	//-------------------------------------------------------------------------
-	
-	
-	
-	//-------------------------------------------------------------------------
-	/** 
-	 * Sets the active section.
-	 * 
-	 * @param $section		(str) section to be set as active.
-	 * 
-	 * @return VOID			(PASS) section was set successfully.
-	 * @return exception	(FAIL) problem encountred setting section. 
-	 */
-	public function set_active_section($section) {
-		if($this->isInitialized === true) {
-			if(in_array($section, $this->get_valid_sections())) {
-				$this->activeSection = $section;
-			}
-			else {
-				throw new exception(__METHOD__ .": invalid section (". $section .")");
-			}
-		}
-		else {
-			throw new exception(__METHOD__ .": not initialized");
-		}
-	}//end set_active_section($section)
 	//-------------------------------------------------------------------------
 	
 	
@@ -119,14 +79,14 @@ class SiteConfig  {
 	private function parse_config() {
 		$specialVars = $this->build_special_vars();
 		$alsoParse = array();
-//		$this->fullConfig = parse_ini_file($this->configFile,true);
 		
 		$this->fullConfig = array();
-		$config = parse_ini_file($this->configFile, true);
+//		$rawConfig = parse_ini_file($this->configFile, true);
+		$rawConfig = $this->get_raw_config();
 		$replacements = array();
 		
-		if(is_array($config) && count($config) > 0) {
-			foreach($config as $sName => $sData) {
+		if(is_array($rawConfig) && count($rawConfig) > 0) {
+			foreach($rawConfig as $sName => $sData) {
 				foreach($sData as $k=>$v) {
 					$localConfigSection = array();
 					if(isset($this->fullConfig[$sName])) {
@@ -138,16 +98,6 @@ class SiteConfig  {
 					$this->fullConfig[$sName][$k] = $parsedValue;
 					
 					$alsoParse[strtoupper($sName) .'/'. strtoupper($k)] = $parsedValue;
-					
-					//TODO: implement option to set a section/value as a CONSTANT
-					$constantName = $k;
-					define(strtoupper($constantName), $parsedValue);
-					
-					$constantPlusSection = $sName .'-'. $constantName;
-					define(strtoupper($constantPlusSection), $parsedValue);
-					
-					//TODO: implement option to set a section/value as a GLOBAL
-					$GLOBALS[$k] = $parsedValue;
 					
 					$alsoParse = array_merge($alsoParse, $this->fullConfig[$sName]);
 				}
@@ -254,5 +204,64 @@ class SiteConfig  {
 	}//end get_fullConfig()
 	//-------------------------------------------------------------------------
 	
+	
+	
+	//-------------------------------------------------------------------------
+	public function get_raw_config() {
+		if(preg_match('/\.xml/', $this->configFile)) {
+//			$rawConfig = _parseXml();
+			$xml = new SimpleXMLElement(file_get_contents($this->configFile));
+			$rawConfig = array();
+			foreach($xml as $x => $y) {
+				foreach($y as $i => $d) {
+					$rawConfig["$x"]["$i"] = "$d";
+				}
+			}
+		}
+		elseif(preg_match('/\.ini/', strtolower($this->configFile))) {
+			$rawConfig = parse_ini_file($this->configFile,true);
+		}
+		else {
+			throw new exception(__METHOD__ .": unsupported filetype (". $this->configFile .")");
+		}
+		return $rawConfig;
+	}//end get_raw_config()
+	//-------------------------------------------------------------------------
+	
+	
+	
+	//-------------------------------------------------------------------------
+	public function make_section_constants($section) {
+		if(!is_null($section) && strlen($section) && in_array($section, $this->get_valid_sections())) {
+			foreach($this->fullConfig[$section] as $k=>$parsedValue) {
+				//TODO: implement option to set a section/value as a CONSTANT
+				$constantName = $k;
+				define(strtoupper($constantName), $parsedValue);
+				
+				$constantPlusSection = $section .'-'. $constantName;
+				define(strtoupper($constantPlusSection), $parsedValue);
+			}
+		}
+		else {
+			throw new InvalidArgumentException("non-existent section, '". $section ."'");
+		}
+	}//end make_section_constants()
+	//-------------------------------------------------------------------------
+	
+	
+	
+	//-------------------------------------------------------------------------
+	public function make_section_globals($section) {
+		if(!is_null($section) && strlen($section) && in_array($section, $this->get_valid_sections())) {
+			foreach($this->fullConfig[$section] as $k=>$parsedValue) {
+				//TODO: implement option to set a section/value as a GLOBAL
+				$GLOBALS[$k] = $parsedValue;
+			}
+		}
+		else {
+			throw InvalidArgumentException("non-existent section, '". $section ."'");
+		}
+	}
+	//-------------------------------------------------------------------------
 }//end SiteConfig
 
