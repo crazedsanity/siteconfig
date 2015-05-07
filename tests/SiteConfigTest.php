@@ -10,8 +10,8 @@ class SiteConfigTest extends PHPUnit_Framework_TestCase {
 	 * To ensure SimpleXML-based queries work (for removing dependencies on 
 	 * PHPXML)...
 	 */
-	public function testSimpleXML() {
-		$myFile = dirname(__FILE__) .'/files/siteConfig.xml';
+	public function _OLD_testSimpleXML() {
+		$myFile = dirname(__FILE__) .'/files/siteConfig.ini';
 		$this->assertFileExists($myFile);
 		
 		$x = new SimpleXMLElement(file_get_contents($myFile));
@@ -37,11 +37,12 @@ class SiteConfigTest extends PHPUnit_Framework_TestCase {
 	public function testConfig() {
 		$this->assertFalse(defined('SITE_ROOT'));
 		
-		$configFile = dirname(__FILE__) .'/files/siteConfig.xml';
+		$configFile = dirname(__FILE__) .'/files/siteConfig.ini';
 		$this->assertTrue(file_exists($configFile));
 		$x = new siteConfig($configFile, null);
+		
 		$this->assertTrue(is_object($x));
-		$this->assertTrue(is_array($x->config));
+//		$this->assertTrue(is_array($x->config));
 		
 		
 		$this->assertTrue(is_array($GLOBALS));
@@ -56,13 +57,24 @@ class SiteConfigTest extends PHPUnit_Framework_TestCase {
 		
 		
 		$this->assertEquals('CS_SESSID', constant('SESSION_NAME'));
-		$this->assertTrue(!isset($GLOBALS['SESSION_NAME']));
-		
-		$this->assertEquals(constant('session_db_host'), constant('DB_PG_HOST'));
-		$this->assertEquals(constant('cs_webdbupgrade-RWDIR'), constant('CS_RWDIR'));
-		
+		$this->assertTrue(isset($GLOBALS['SESSION_NAME']));
 		$this->assertFalse(isset($GLOBALS['API_AUTHTOKEN']));
-		$this->assertFalse(defined('API_AUTHTOKEN'));
+		
+		
+		
+		$testProjectSection = $x->get_section('cs-project');
+		$this->assertEquals(1, count($testProjectSection));
+		
+		$a = $x->get_fullConfig();
+		$this->assertEquals($a['cs-project']['api_authtoken'], $a['test']['TOKEN']);
+		$this->assertEquals($a['cs-project']['api_authtoken'], $a['test']['TOKEN2']);
+		
+		$keys = array_keys($a);
+		$this->assertEquals($x->get_valid_sections(), $keys);
+		
+		foreach($keys as $name) {
+			$this->assertEquals($a[$name], $x->get_section($name));
+		}
 	}
 
 }

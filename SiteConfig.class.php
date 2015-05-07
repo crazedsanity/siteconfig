@@ -16,9 +16,6 @@ use crazedsanity\FileSystem;
 
 class SiteConfig  {
 	
-	private $xml;
-	private $pathValues = array();
-	private $fs;
 	private $configDirname;
 	private $configFile;
 	private $activeSection;
@@ -38,51 +35,24 @@ class SiteConfig  {
 	 * @return exception			(FAIL) failed to create object (see exception message)
 	 */
 	public function __construct($configFileLocation, $section=null) {
-		
 		if(strlen($configFileLocation) && file_exists($configFileLocation)) {
 			
 			$this->configDirname = dirname($configFileLocation);
 			$this->configFile = $configFileLocation;
-			$this->fs = new FileSystem($this->configDirname);
-			$this->xml = new SimpleXMLElement($this->fs->read($configFileLocation));
 		}
 		else {
 			throw new exception(__METHOD__ .": invalid configuration file (". $configFileLocation .")");
 		}
 		
-		$this->gfObj = new ToolBox;
+		$ini = parse_ini_file($configFileLocation, true);
+//		ToolBox::debug_print($ini,1);
+//		exit;
 		
-		
-		if(is_null($section) || !strlen($section)) {
-			$section = null;
-			foreach($this->xml as $x=>$y) {
-				if(is_null($section)) {
-					$section = "$x";
-				}
-			}
-		}
-		//take the whole configuration & put it into a simple array.
-		foreach ($this->xml as $x => $y) {
-			$this->configSections[] = "$x";
-			foreach ($y as $i => $d) {
-				$this->fullConfig["$x"]["$i"] = "$d";
-			}
-		}
-
+		$this->parse_config();
 		if(strlen($section)) {
-			try {
-				$this->parse_config();
-				$this->set_active_section($section);
-				$this->config = $this->get_section($section);
-			}
-			catch(exception $e) {
-				throw new exception(__METHOD__ .": invalid section (". $section ."), DETAILS::: ". $e->getMessage());
-			}
+			$this->set_active_section($section);
+			$this->config = $this->get_section($section);
 		}
-		else {
-			throw new exception(__METHOD__ .": no section given (". $section .")");
-		}
-		
 	}//end __construct()
 	//-------------------------------------------------------------------------
 	
@@ -99,7 +69,7 @@ class SiteConfig  {
 	 */
 	public function set_active_section($section) {
 		if($this->isInitialized === true) {
-			if(in_array($section, $this->configSections)) {
+			if(in_array($section, $this->get_valid_sections())) {
 				$this->activeSection = $section;
 			}
 			else {
@@ -115,7 +85,7 @@ class SiteConfig  {
 	
 	
 	//-------------------------------------------------------------------------
-	protected function parse_value($value, array $replacements = null, $cleanPath = false) {
+	protected function parse_value($value, array $replacements = null) {
 		//remove double-slashes (//)
 		$value = preg_replace('/[\/]{2,}/', '\/', $value);
 
@@ -123,10 +93,10 @@ class SiteConfig  {
 		$value = preg_replace('/{\//', '{', $value);
 
 		//replace special vars.
-		$value = $this->gfObj->mini_parser($value, $replacements, '{', '}');
+		$value = ToolBox::mini_parser($value, $replacements, '{', '}');
 		
-		if($cleanPath === true) {
-			$value = $this->gfObj->resolve_path_with_dots($value);
+		if(strlen($value)) {
+			$value = ToolBox::resolve_path_with_dots($value);
 		}
 		
 		return($value);
@@ -149,44 +119,45 @@ class SiteConfig  {
 	private function parse_config() {
 		$specialVars = $this->build_special_vars();
 		$alsoParse = array();
-		if(is_array($this->fullConfig) && count($this->fullConfig) > 0) {
-			foreach($this->fullConfig as $sName => $sData) {
+//		$this->fullConfig = parse_ini_file($this->configFile,true);
+		
+		$this->fullConfig = array();
+		$config = parse_ini_file($this->configFile, true);
+		$replacements = array();
+		
+		if(is_array($config) && count($config) > 0) {
+			foreach($config as $sName => $sData) {
 				foreach($sData as $k=>$v) {
-					$attribs = $this->xml->$sName->$k->attributes();
-					$replacements = array_merge($alsoParse, $specialVars, $this->fullConfig[$sName]);
-					$cleanPath = false;
-					
-					if($attribs->cleanpath) {
-						$cleanPath = true;
+					$localConfigSection = array();
+					if(isset($this->fullConfig[$sName])) {
+						$localConfigSection = $this->fullConfig[$sName];
 					}
-					$parsedValue = $this->parse_value($v, $replacements, $cleanPath);
+					$replacements = array_merge($alsoParse, $specialVars, $localConfigSection, $replacements);
+
+					$parsedValue = $this->parse_value($v, $replacements, true);
 					$this->fullConfig[$sName][$k] = $parsedValue;
 					
-					$this->pathValues[strtoupper($sName) .'/'. strtoupper($k)] = $parsedValue;
 					$alsoParse[strtoupper($sName) .'/'. strtoupper($k)] = $parsedValue;
 					
-					if($attribs->setconstant) {
-						$constantName = $k;
-						if(strlen($attribs->setconstantprefix) > 0) {
-							$constantName = $attribs->setconstantprefix .'-'. $constantName;
-						}
-						if(!defined($constantName)) {
-							define($constantName, $parsedValue);
-						}
-					}
+					//TODO: implement option to set a section/value as a CONSTANT
+					$constantName = $k;
+					define(strtoupper($constantName), $parsedValue);
 					
-					if($attribs->setglobal) {
-						$GLOBALS[$k] = $parsedValue;
-					}
+					$constantPlusSection = $sName .'-'. $constantName;
+					define(strtoupper($constantPlusSection), $parsedValue);
+					
+					//TODO: implement option to set a section/value as a GLOBAL
+					$GLOBALS[$k] = $parsedValue;
+					
+					$alsoParse = array_merge($alsoParse, $this->fullConfig[$sName]);
 				}
-				$alsoParse = array_merge($alsoParse, $this->fullConfig[$sName]);
 			}
 		}
 		else {
-			throw new LogicException(__METHOD__ .": no configuration to parse");
+			throw new LogicException(__METHOD__ .": no configuration to parse (". $this->configFile .")");
 		}
-		$this->isInitialized = true;
 		
+		$this->isInitialized = true;
 		return $this->fullConfig;
 	}//end parse_config()
 	//-------------------------------------------------------------------------
@@ -228,8 +199,8 @@ class SiteConfig  {
 	 */
 	public function get_valid_sections() {
 		if($this->isInitialized === true) {
-			if(is_array($this->configSections) && count($this->configSections)) {
-				$retval = $this->configSections;
+			if(is_array($this->fullConfig) && count($this->fullConfig)) {
+				$retval = array_keys($this->fullConfig);
 			}
 			else {
 				throw new exception(__METHOD__ .": no sections defined, probably invalid configuration");
@@ -261,7 +232,7 @@ class SiteConfig  {
 				$appUrl = '/';
 			}
 			else {
-				$appUrl = '/'. $this->gfObj->string_from_array($bits, null, '/');
+				$appUrl = '/'. ToolBox::string_from_array($bits, null, '/');
 			}
 		}
 		
@@ -273,6 +244,14 @@ class SiteConfig  {
 		);
 		return($specialVars);	
 	}//end build_special_vars()
+	//-------------------------------------------------------------------------
+	
+	
+	
+	//-------------------------------------------------------------------------
+	public function get_fullConfig() {
+		return $this->fullConfig;
+	}//end get_fullConfig()
 	//-------------------------------------------------------------------------
 	
 }//end SiteConfig
