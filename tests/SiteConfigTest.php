@@ -3,6 +3,7 @@
 
 use crazedsanity\ToolBox;
 use crazedsanity\FileSystem;
+use crazedsanity\SiteConfig;
 
 class SiteConfigTest extends PHPUnit_Framework_TestCase {
 	
