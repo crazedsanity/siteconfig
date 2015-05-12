@@ -1,9 +1,9 @@
 <?php
 
 
-use crazedsanity\ToolBox;
-use crazedsanity\FileSystem;
-use crazedsanity\SiteConfig;
+use crazedsanity\core\ToolBox;
+use crazedsanity\core\FileSystem;
+use crazedsanity\SiteConfig\SiteConfig;
 
 class SiteConfigTest extends PHPUnit_Framework_TestCase {
 	
@@ -28,7 +28,7 @@ class SiteConfigTest extends PHPUnit_Framework_TestCase {
 		
 		$configFile = dirname(__FILE__) .'/files/siteConfig.ini';
 		$this->assertTrue(file_exists($configFile));
-		$x = new siteConfig($configFile, null);
+		$x = new SiteConfig($configFile, null);
 		
 		$this->assertTrue(is_object($x));
 //		$this->assertTrue(is_array($x->config));

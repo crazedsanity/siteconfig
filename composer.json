@@ -9,7 +9,10 @@
         }
     ],
     "minimum-stability": "dev",
+	"autoload": {
+		"classmap": ["src/"]
+	},
     "require": {
-        "crazedsanity/core": "~0.1"
+        "crazedsanity/core": "~0.2"
     }
 }

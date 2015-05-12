@@ -10,9 +10,9 @@
  * 
  */
 
-namespace crazedsanity;
+namespace crazedsanity\SiteConfig;
 
-use crazedsanity\ToolBox;
+use crazedsanity\core\ToolBox;
 use \SimpleXmlElement;
 
 class SiteConfig  {
