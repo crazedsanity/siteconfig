@@ -13,6 +13,6 @@
 		"classmap": ["src/"]
 	},
     "require": {
-        "crazedsanity/core": "~0.2"
+        "crazedsanity/core": "^0.3"
     }
 }
