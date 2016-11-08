@@ -22,6 +22,8 @@ class SiteConfig  {
 	private $fullConfig=array();
 	private $isInitialized=false;
 	
+	public $config;
+	
 	//-------------------------------------------------------------------------
 	/**
 	 * Constructor.
@@ -111,6 +113,7 @@ class SiteConfig  {
 		}
 		
 		$this->isInitialized = true;
+		$this->config = $this->fullConfig;
 		return $this->fullConfig;
 	}//end parse_config()
 	//-------------------------------------------------------------------------
@@ -239,10 +242,14 @@ class SiteConfig  {
 			foreach($this->fullConfig[$section] as $k=>$parsedValue) {
 				//TODO: implement option to set a section/value as a CONSTANT
 				$constantName = $k;
-				define(strtoupper($constantName), $parsedValue);
+				if(!defined($constantName)) {
+					define($constantName, $parsedValue);
+				}
 				
-				$constantPlusSection = $section .'-'. $constantName;
-				define(strtoupper($constantPlusSection), $parsedValue);
+				$constantPlusSection = preg_replace('~\-~', '_', $section) .'-'. $constantName;
+				if(!defined($constantPlusSection)) {
+					define($constantPlusSection, $parsedValue);
+				}
 			}
 		}
 		else {
