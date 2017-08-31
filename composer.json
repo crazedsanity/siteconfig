@@ -1,18 +1,25 @@
 {
     "name": "crazedsanity/siteconfig",
     "description": "XML/INI-based site configuration for PHP.",
+	"keywords": ["php", "dry", "oaoo"],
+	"homepage": "http://www.crazedsanity.com",
     "license": "MIT",
     "authors": [
         {
             "name": "Dan Falconer",
-            "email": "github@crazedsanity.com"
+			"email": "github@crazedsanity.com",
+			"homepage": "http://www.crazedsanity.com",
+			"role": "Developer"
         }
     ],
-    "minimum-stability": "dev",
 	"autoload": {
 		"classmap": ["src/"]
 	},
     "require": {
         "crazedsanity/core": "^0.3"
-    }
+    },
+	"require-dev": {
+		"phpunit/phpunit": "^4.6 || ^5.0"
+	},
+	"minimum-stability": "dev"
 }

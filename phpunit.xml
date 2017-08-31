@@ -1,7 +1,4 @@
-<phpunit 
-	bootstrap="tests/bootstrap.php"
-	convertErrorsToExceptions="true"
-	>
+<phpunit bootstrap="tests/bootstrap.php" convertErrorsToExceptions="true">
 	<testsuites>
 		<testsuite name="all">
 			<directory>tests</directory>
@@ -9,9 +6,10 @@
 	</testsuites>
 	<filter>
 		<blacklist>
-			<directory>./vendor</directory>
-			<directory>./abstract</directory>
-			<file>AutoLoader.class.php</file>
+			<directory suffix=".php">vendor/</directory>
 		</blacklist>
+		<whitelist>
+			<directory suffix=".php">src/</directory>
+		</whitelist>
 	</filter>
 </phpunit>
